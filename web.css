@@ -5,6 +5,8 @@
   --wax: #fffafc;
   --stripe: #ec6f98;
   --flame: #ff9a1f;
+  --heart: #d4283c;
+  --heart-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
   --fade: 350ms; /* keep in sync with FADE_MS in main.js */
 }
 
@@ -88,6 +90,54 @@ h1 {
 .cta:focus-visible {
   outline: 3px solid var(--plum);
   outline-offset: 4px;
+}
+
+/* Faint hearts behind the landing page */
+#landing {
+  position: relative;
+  overflow: hidden;
+}
+
+#landing h1,
+#landing .cta {
+  position: relative; /* keeps the text and button above the hearts */
+}
+
+.hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.heart {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  aspect-ratio: 1;
+  background: var(--heart);
+  -webkit-mask: var(--heart-shape) center / contain no-repeat;
+  mask: var(--heart-shape) center / contain no-repeat;
+  opacity: 0.16;
+  transform: rotate(var(--r));
+  animation: drift var(--t, 8s) ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+
+/* Vary opacity, speed and phase so the hearts don't move in sync */
+.heart:nth-child(3n)  { opacity: 0.1; --t: 10s; }
+.heart:nth-child(4n)  { opacity: 0.22; --d: -5s; }
+.heart:nth-child(odd) { --d: -3s; }
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(var(--r)); }
+  50%      { transform: translateY(-0.6rem) rotate(calc(var(--r) + 5deg)); }
+}
+
+@media (max-width: 36rem) {
+  .heart {
+    width: calc(var(--s) * 0.7);
+  }
 }
 
 /* Candles */
@@ -229,7 +279,8 @@ h1 {
     animation: none;
   }
 
-  .is-out .smoke {
+  .is-out .smoke,
+  .heart {
     animation: none;
   }
 }
