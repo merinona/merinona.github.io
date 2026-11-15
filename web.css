@@ -1,1056 +1,235 @@
-/* Text can't be selected by default: no stray highlights from double-clicks or dragging,
-   which keeps the page looking clean. The -webkit- version is for Safari (iPhone, iPad, Mac). */
-* {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* The few places where selecting is useful opt back in: the email address (so it can be
-   copied if no mail app is set up), form fields, code, and anything given the class "selectable". */
-input, textarea, pre, code, kbd, samp,
-pre *, code *,
-.selectable, .selectable *,
-.email__link {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-/* ==========================================================================
-   Portfolio – style.css
-
-   1. Tokens          5. Hero
-   2. Base            6. Sections
-   3. Loading screen  7. Lists (work, notes, achievements, social)
-   4. Header & nav    8. Connect, footer, motion preferences
-   ========================================================================== */
-
-
-/* 1. Tokens
-   ========================================================================== */
 :root {
-  --bg: #000000;          /* pure black, as requested */
-  --text: #f2f2f2;
-  --text-2: #a3a3a3;      /* secondary text, 8:1 on black */
-  --text-3: #767676;      /* tertiary text, 4.7:1 on black */
-  --line: #1a1a1a;
-  --line-strong: #333333;
-
-  --font-display: "Noto Serif Display", "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", "DejaVu Sans Mono", "Courier New", monospace;   /* same stack as the loading screen */
-  --font-math: "STIX Two Text", "Latin Modern Math", "Cambria Math", "Times New Roman", Georgia, serif;   /* equations: a real italic */
-  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-
-  --pad: clamp(1.25rem, 5vw, 3.5rem);   /* page side padding */
-  --max: 72rem;                         /* content width */
-  --header-h: 4.25rem;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-
-  color-scheme: dark;
+  --pink: #f9c8d6;
+  --plum: #4a1730;
+  --plum-soft: #6b2646;
+  --wax: #fffafc;
+  --stripe: #ec6f98;
+  --flame: #ff9a1f;
+  --fade: 350ms; /* keep in sync with FADE_MS in main.js */
 }
 
-
-/* 2. Base
-   ========================================================================== */
-*,
-*::before,
-*::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 html {
-  background: var(--bg);
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-h) + 1rem);
-  scrollbar-gutter: stable;           /* the page never shifts sideways when the scrollbar appears */
-  scrollbar-width: thin;
-  scrollbar-color: #333333 #000000;   /* a slim scrollbar that matches the theme */
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
+  background: var(--pink);
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 1rem;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  min-height: 100svh;
+  background: var(--pink);
+  color: var(--plum);
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
-body.is-loading,
-body.menu-open { overflow: hidden; }
-
-h1, h2, h3, p, ul, ol, dl, dd { margin: 0; }
-ul, ol { padding: 0; list-style: none; }
-
-a { color: inherit; text-decoration: none; }
-
-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
+main {
+  display: grid;
+  min-height: 100svh;
 }
 
-svg { display: block; }
-
-::selection { background: #ffffff; color: #000000; }
-
-:focus-visible {
-  outline: 2px solid var(--text);
-  outline-offset: 4px;
-  border-radius: 2px;
-}
-
-.container {
-  width: 100%;
-  max-width: calc(var(--max) + var(--pad) * 2);
-  margin-inline: auto;
-  padding-left: max(var(--pad), env(safe-area-inset-left));
-  padding-right: max(var(--pad), env(safe-area-inset-right));
-}
-
-.sprite {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.skip-link {
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 2000;
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  background: var(--text);
-  color: #000;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transform: translateY(-200%);
-}
-.skip-link:focus { transform: none; }
-
-
-/* 3. Loading screen (grid of 0s and 1s)
-   ========================================================================== */
-.loader {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: #000000;
-  color: var(--text-2);
-  transition: opacity 0.8s ease, visibility 0s linear 0.8s;
-}
-
-.loader.is-done {
+/* All pages share one layout; only one is shown at a time */
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 6vw, 4rem);
+  text-align: center;
   opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  transition: opacity var(--fade) ease;
 }
 
-/* "press any key to skip": plain text in the last row of the grid (main.js positions it) */
-.loader__hint {
+.page[hidden] {
+  display: none;
+}
+
+.page.is-visible {
+  opacity: 1;
+}
+
+.page:focus {
+  outline: none;
+}
+
+h1 {
+  max-width: 18em;
+  margin: 0;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 5.5vw, 3.4rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+/* Landing button */
+.cta {
+  margin-top: 2.5rem;
+  padding: 0.8em 1.9em;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--pink);
+  background: var(--plum);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.cta:hover {
+  background: var(--plum-soft);
+}
+
+.cta:active {
+  transform: scale(0.97);
+}
+
+.cta:focus-visible {
+  outline: 3px solid var(--plum);
+  outline-offset: 4px;
+}
+
+/* Candles */
+.candles {
+  display: grid;
+  grid-template-columns: repeat(10, 2.75rem);
+  gap: 1.25rem 0.5rem;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.candle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 2.75rem;
+  height: 5.5rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.candle:disabled {
+  cursor: default;
+}
+
+.candle:focus-visible {
+  outline: 2px solid var(--plum);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
+.body {
+  width: 1rem;
+  height: 3.2rem;
+  /* Diagonal bands read as a spiral wrapped around the candle */
+  background: repeating-linear-gradient(
+    -60deg,
+    var(--wax) 0 0.3rem,
+    var(--stripe) 0.3rem 0.6rem
+  );
+  border-radius: 0.25rem 0.25rem 0.1rem 0.1rem;
+  box-shadow: inset 0 0 0 1px rgba(74, 23, 48, 0.18);
+}
+
+.wick {
+  width: 2px;
+  height: 0.45rem;
+  background: var(--plum);
+}
+
+/* The flame is a rotated teardrop inside a wrapper that flickers */
+.flame {
+  position: relative;
+  width: 0.9rem;
+  height: 1.3rem;
+  transform-origin: 50% 100%;
+  animation: flicker 1.4s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.flame::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0.15rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  background: var(--flame);
+  border-radius: 50% 0 50% 50%;
+  transform: rotate(-45deg);
+  box-shadow: 0 0 16px 5px rgba(255, 154, 31, 0.45);
+}
+
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  30%      { transform: scale(1.06, 0.94) rotate(-2deg); }
+  60%      { transform: scale(0.95, 1.06) rotate(2deg); }
+}
+
+/* A thin wisp of smoke when a candle goes out */
+.smoke {
   position: absolute;
   left: 50%;
-  bottom: calc(1.5rem + env(safe-area-inset-bottom));
-  margin: 0;
-  color: var(--text-2);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-
-/* When skipped, the loading screen fades away faster than it normally does */
-.loader.is-skipping {
-  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
-}
-
-/* Failsafe: if main.js never runs (wrong folder, blocked file), the loader
-   still fades away after 6 seconds and the page is shown. When the script
-   works, the loader is already gone by then, so this has no effect. */
-@keyframes loader-timeout {
-  to { opacity: 0; visibility: hidden; pointer-events: none; }
-}
-
-.loader { animation: loader-timeout 0.6s ease 6s forwards; }
-
-/* The canvas fills the screen, except for the safe areas of notched phones,
-   which stay plain black. The digit grid and its padding are drawn inside it. */
-.loader__canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-@supports (top: env(safe-area-inset-top)) {
-  .loader__canvas {
-    top: env(safe-area-inset-top);
-    left: env(safe-area-inset-left);
-    width: calc(100% - env(safe-area-inset-left) - env(safe-area-inset-right));
-    height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  }
-}
-
-
-/* 4. Header & navigation
-   ========================================================================== */
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: var(--header-h);
-}
-
-/* The blur lives on a pseudo-element so the mobile menu (position: fixed)
-   is not trapped inside the header's box. */
-.header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: rgba(0, 0, 0, 1);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.3s ease;
-}
-
-.header.is-scrolled::before { border-bottom-color: var(--line); }
-
-.header__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  height: 100%;
-}
-
-.brand {
-  position: relative;
-  z-index: 2;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  transition: opacity 0.4s ease, visibility 0s;
-}
-
-/* Hidden while the big name on the first screen is in view. It keeps its space
-   so the navigation never shifts; a plain fade brings it in once the name has scrolled away. */
-.brand.is-hidden {
+  bottom: 3.9rem;
+  width: 2px;
+  height: 1.1rem;
+  margin-left: -1px;
+  background: linear-gradient(to top, rgba(74, 23, 48, 0.4), transparent);
+  border-radius: 2px;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+  transform-origin: 50% 100%;
 }
 
-.nav__list {
-  display: flex;
-  align-items: center;
-  gap: clamp(1rem, 2.6vw, 2.25rem);
+.is-out .flame {
+  opacity: 0;
+  transform: scale(0.3);
+  animation: none;
 }
 
-.nav__link {
-  position: relative;
-  display: inline-block;
-  padding-block: 0.5rem;
-  color: var(--text-2);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  transition: color 0.25s ease;
+.is-out .smoke {
+  animation: wisp 1s ease-out;
 }
 
-.nav__link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0.15rem;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.35s var(--ease-out);
+@keyframes wisp {
+  0%   { opacity: 0;   transform: translateY(0) scaleY(0.4); }
+  25%  { opacity: 0.9; }
+  100% { opacity: 0;   transform: translateY(-1.2rem) scaleY(1.2); }
 }
 
-.nav__link:hover,
-.nav__link.is-active { color: var(--text); }
-
-.nav__link:hover::after,
-.nav__link.is-active::after { transform: scaleX(1); }
-
-.nav-toggle { display: none; }
-
-/* Phones and small tablets: full-screen menu */
-@media (max-width: 47.5rem) {
-  :root { --header-h: 4rem; }
-
-  .nav-toggle {
-    position: relative;
-    z-index: 2;
-    display: block;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-right: -0.6rem;
-  }
-
-  .nav-toggle span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 1.5rem;
-    height: 1px;
-    margin-top: -0.5px;
-    background: var(--text);
-    transform: translateX(-50%) translateY(-0.2rem);
-    transition: transform 0.45s var(--ease-out);
-  }
-
-  .nav-toggle span + span { transform: translateX(-50%) translateY(0.2rem); }
-
-  .nav-toggle[aria-expanded="true"] span { transform: translateX(-50%) rotate(45deg); }
-  .nav-toggle[aria-expanded="true"] span + span { transform: translateX(-50%) rotate(-45deg); }
-
-  .nav {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    display: flex;
-    padding:
-      calc(var(--header-h) + 1rem)
-      max(var(--pad), env(safe-area-inset-right))
-      max(2rem, env(safe-area-inset-bottom))
-      max(var(--pad), env(safe-area-inset-left));
-    overflow-y: auto;
-    background: #000000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.45s var(--ease-out), visibility 0s linear 0.45s;
-  }
-
-  .nav.is-open {
-    opacity: 1;
-    visibility: visible;
-    transition-delay: 0s;
-  }
-
-  .nav__list {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    width: 100%;
-    margin-block: auto;     /* centres vertically without clipping on short screens */
-  }
-
-  .nav__item {
-    display: flex;
-    align-items: baseline;
-    gap: 1.25rem;
-    width: 100%;
-  }
-
-  /* The menu is numbered in binary, like the sections (Home is 0). main.js fills in data-bits. */
-  .nav__item::before {
-    content: attr(data-bits);
-    flex: none;
-    width: 6.25rem;
-    color: var(--text-3);
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    letter-spacing: 0.12em;
-  }
-
-  .nav__link {
-    color: var(--text);
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 9vw, 3.25rem);
-    font-weight: 300;
-    line-height: 1.25;
-    padding-block: 0.25rem;
-  }
-
-  .nav__link::after { display: none; }
-  .nav__link.is-active { color: var(--text-2); }
-}
-
-
-/* Very narrow phones (320 px): tighter menu numbers so the longest link still fits */
-@media (max-width: 22.5rem) {
-  .nav__item { gap: 0.75rem; }
-
-  .nav__item::before {
-    width: 4.75rem;
-    font-size: 0.6875rem;
-    letter-spacing: 0.04em;
-  }
-
-  .nav__link { font-size: 1.875rem; }
-}
-
-
-/* 5. Hero
-   ========================================================================== */
-/* The first screen: name close to the navigation bar, details and social links
-   at the bottom, and a "scroll" cue underneath. Everything else starts below it. */
-.hero {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-height: 100svh;   /* "small viewport": stays calm when mobile browser toolbars hide */
-  padding-top: calc(var(--header-h) + clamp(0.75rem, 2.5vh, 1.5rem));
-}
-
-.hero__inner {
-  display: grid;
-  flex: 1 0 auto;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto auto;   /* name, drawing, details, scroll cue */
-}
-
-.hero__title {
-  margin-bottom: clamp(1.75rem, 4.5vw, 3rem);
-  font-family: var(--font-display);
-  font-size: clamp(3.25rem, min(13vw, 22vh), 10.5rem);
-  font-weight: 300;
-  line-height: 0.98;
-  letter-spacing: -0.025em;
-}
-
-.hero__foot {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "intro"
-    "actions"
-    "socials";
-  gap: 1.75rem 3rem;
-}
-
-@media (min-width: 48rem), (min-width: 32rem) and (max-height: 32rem) {
-  .hero__foot {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "intro actions"
-      "socials actions";
-    align-items: end;
+@media (max-width: 36rem) {
+  .candles {
+    grid-template-columns: repeat(5, 2.75rem);
   }
 }
 
-.hero__intro { grid-area: intro; max-width: 30rem; }
-
-/* Figure 1.1 (built by main.js): an interactive drawing of the Lorenz attractor with a caption.
-   It fills the free space on the first screen: below the name on narrow screens, beside it on wide
-   ones. When there is not enough room, main.js leaves it out (is-removed). */
-.hero__figure {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  min-height: 0;
+/* Paragraph page */
+.message {
+  max-width: 34rem;
   margin: 0;
-  overflow: hidden;
-  contain: size;   /* its content never makes the first screen taller: it only uses the space that is left */
+  text-align: left;
+  font-size: clamp(1.1rem, 2.4vw, 1.35rem);
+  line-height: 1.75;
 }
-
-/* clear air between the caption and the intro text below (only when it is actually shown) */
-.hero__figure:not(.is-removed) { margin-bottom: clamp(1.25rem, 4vh, 2rem); }
-
-.hero__figure.is-removed {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.hero__plot {
-  position: relative;
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-.hero__plot canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.hero__trail {
-  cursor: pointer;
-  touch-action: pan-y;      /* a tap restarts the paths; swiping up and down still scrolls the page */
-}
-
-.hero__trail:focus-visible { outline-offset: -2px; }
-
-/* The name's box runs the full width of the page, over the top of the figure. It is not
-   interactive, so clicks pass through it to the figure underneath. */
-.hero__title { pointer-events: none; }
-.hero__heads { pointer-events: none; }
-
-.hero__caption {
-  flex: none;
-  padding-top: 0.625rem;
-  color: var(--text-2);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-
-.hero__caption p { margin: 0; }
-
-.fig__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.35rem !important;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-}
-
-.fig__live {
-  white-space: pre;
-  font-variant-numeric: tabular-nums;
-}
-
-.fig__body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-}
-
-.fig__text { flex: 1 1 15rem; }
-.fig__text strong { color: var(--text); font-weight: 500; }
-
-.fig__eq {
-  flex: 0 1 13rem;
-  font-family: var(--font-math);
-  font-size: 0.9375rem;
-  line-height: 1.6;
-}
-
-.fig__eq span {
-  display: inline-block;
-  margin-right: 1rem;
-  white-space: nowrap;
-}
-
-.fig__eq var { font-style: italic; }
-
-.fig__eq .fig__const {
-  color: var(--text-3);
-  font-size: 0.8125rem;
-}
-
-/* Wide, short space: the caption sits beside the picture, like a margin note in a textbook */
-.hero__figure[data-arrange="side"] {
-  flex-direction: row;
-  gap: 1.5rem;
-}
-
-.hero__figure[data-arrange="side"] .hero__plot { min-width: 0; }
-
-.hero__figure[data-arrange="side"] .hero__caption {
-  display: flex;
-  flex: 0 0 14.5rem;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding-top: 0;
-}
-
-.hero__figure[data-arrange="side"] .fig__body {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  gap: 0.75rem;
-}
-
-.hero__figure[data-arrange="side"] .fig__text { flex: none; }
-.hero__figure[data-arrange="side"] .fig__eq { flex: none; }
-.hero__figure[data-arrange="side"] .fig__eq span { display: block; margin-right: 0; }
-
-/* The caption gives way before the picture does (main.js picks the level that fits) */
-.hero__figure[data-level="full"] .fig__short,
-.hero__figure[data-level="text"] .fig__short,
-.hero__figure[data-level="text"] .fig__eq,
-.hero__figure[data-level="short"] .fig__body { display: none; }
-
-@media (max-width: 47.9375rem) {
-  .fig__eq { flex-basis: 100%; }   /* on a phone the equations run across the full width, under the text */
-}
-
-@media (min-width: 48rem), (min-width: 32rem) and (max-height: 32rem) {
-  .hero__inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-  /* The name spans the full width and sits above the figure, so a long name never gets cut */
-  .hero__title {
-    position: relative;
-    z-index: 1;
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .hero__figure { grid-column: 2; grid-row: 1 / 3; }
-
-  /* A name long enough to reach the figure pushes it underneath (main.js adds is-below) */
-  .hero__figure.is-below { grid-column: 1 / -1; grid-row: 2; }
-  .hero__foot { grid-column: 1 / -1; grid-row: 3; }
-  .scroll-cue { grid-column: 1 / -1; grid-row: 4; }
-}
-
-.hero__role {
-  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.3rem);
-  font-weight: 500;
-  line-height: 1.45;
-}
-
-.hero__lead {
-  margin-top: 0.5rem;
-  color: var(--text-2);
-}
-
-.hero__actions {
-  grid-area: actions;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-/* Social icons: round outline buttons, the same quiet style as the ghost button */
-.socials {
-  grid-area: socials;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.social {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  color: var(--text-2);
-  transition: color 0.3s ease, border-color 0.3s ease;
-}
-
-.social svg {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.social:hover {
-  border-color: var(--text);
-  color: var(--text);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 3rem;
-  padding: 0 1.6rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-.btn--solid {
-  border-color: var(--text);
-  background: var(--text);
-  color: #000000;
-}
-
-.btn--solid:hover {
-  background: transparent;
-  color: var(--text);
-}
-
-.btn--ghost:hover { border-color: var(--text); }
-
-/* "Scroll to see more": fades out as the visitor scrolls */
-.scroll-cue {
-  justify-self: center;
-  display: block;
-  margin-top: clamp(1.75rem, 5vh, 3rem);
-  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
-}
-
-.scroll-cue__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--text-3);
-  font-size: 0.8125rem;
-  letter-spacing: 0.02em;
-  transition: color 0.3s ease;   /* opacity is driven directly by the scroll position (main.js) */
-}
-
-.scroll-cue:hover .scroll-cue__inner { color: var(--text); }
-.scroll-cue__inner.is-gone { visibility: hidden; }
-
-.scroll-cue__line {
-  width: 1px;
-  height: 2.25rem;
-  background: var(--line-strong);
-}
-
-/* Short screens (small phones, phones on their side): tighten the first screen so it still fits */
-@media (max-height: 40rem) {
-  .hero__title {
-    margin-bottom: 1rem;
-    font-size: clamp(2.75rem, min(13vw, 18vh), 10.5rem);
-  }
-
-  .hero__foot { gap: 1.25rem 2rem; }
-
-  .scroll-cue {
-    margin-top: 1rem;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  }
-
-  .scroll-cue__line { height: 1.5rem; }
-}
-
-@media (max-height: 30rem) {
-  :root { --header-h: 3.5rem; }
-
-  .hero__title { font-size: clamp(2.25rem, min(13vw, 14vh), 10.5rem); }
-  .hero__lead { margin-top: 0.25rem; font-size: 0.875rem; }
-  .btn { min-height: 2.5rem; }
-  .social { width: 2.5rem; height: 2.5rem; }
-  .scroll-cue__line { display: none; }
-}
-
-
-/* 6. Sections
-   ========================================================================== */
-.section { padding-block: clamp(4.5rem, 12vw, 9rem); }
-
-.section__layout {
-  display: grid;
-  gap: clamp(2rem, 6vw, 4.5rem);
-}
-
-.section__head { display: flex; flex-direction: column; }
-
-/* A small binary number above each section title, in the same font as the loading
-   screen (decorative). It sits tight against the title so the two read as one unit. */
-.section__mark {
-  margin-bottom: 0.15rem;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  line-height: 1;
-  letter-spacing: 0.12em;
-  white-space: pre;
-  user-select: none;
-}
-
-.section__title {
-  font-family: var(--font-display);
-  font-size: clamp(2.25rem, 5.5vw, 3.75rem);
-  font-weight: 300;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-}
-
-@media (min-width: 56.25rem) {
-  .section__layout { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
-
-  .section__head {
-    position: sticky;
-    top: calc(var(--header-h) + 2rem);
-    align-self: start;
-  }
-}
-
-.lead {
-  max-width: 34ch;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 1rem + 2vw, 2.4rem);
-  font-weight: 300;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
-
-.prose { margin-top: 1.75rem; }
-.prose p { max-width: 62ch; color: var(--text-2); }
-.prose p + p { margin-top: 1.25rem; }
-
-.facts {
-  display: grid;
-  gap: 1.75rem 2.5rem;
-  margin-top: clamp(2.5rem, 5vw, 3.5rem);
-  padding-top: clamp(2rem, 4vw, 2.75rem);
-  border-top: 1px solid var(--line);
-}
-
-@media (min-width: 36rem) {
-  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-.facts dt {
-  margin-bottom: 0.25rem;
-  color: var(--text-3);
-  font-size: 0.875rem;
-}
-
-.facts dd { color: var(--text); }
-
-.text-link {
-  display: inline-block;
-  margin-top: 2.25rem;
-  padding-bottom: 0.2rem;
-  border-bottom: 1px solid var(--line-strong);
-  font-weight: 600;
-  transition: border-color 0.3s ease;
-}
-
-.text-link:hover { border-bottom-color: var(--text); }
-
-
-/* 7. Lists
-   ========================================================================== */
-.section__body > .lead + .list,
-.section__body > .email + .list { margin-top: clamp(2rem, 5vw, 3rem); }
-
-.list { border-top: 1px solid var(--line); }
-
-.row,
-.entry {
-  padding-block: clamp(1.4rem, 3vw, 2rem);
-  border-bottom: 1px solid var(--line);
-}
-
-.row {
-  display: grid;
-  align-items: start;
-  gap: 0.5rem 1.5rem;
-  transition: opacity 0.3s ease;
-}
-
-.row__main { grid-area: main; min-width: 0; }
-
-.row__title,
-.entry__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 1.1rem + 1.1vw, 1.9rem);
-  font-weight: 300;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.row__text,
-.entry__text {
-  margin-top: 0.5rem;
-  max-width: 54ch;
-  color: var(--text-2);
-  font-size: 0.9375rem;
-}
-
-.row__meta,
-.row__date {
-  color: var(--text-3);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.row__icon {
-  grid-area: icon;
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-top: 0.3rem;
-  color: var(--text-3);
-  transition: color 0.3s ease;
-}
-
-/* Work: title and description, year and type, link icon */
-.row--work {
-  grid-template-columns: minmax(0, 1fr) 1.25rem;
-  grid-template-areas:
-    "main icon"
-    "meta meta";
-}
-
-.row--work .row__meta {
-  grid-area: meta;
-  display: flex;
-  gap: 1rem;
-}
-
-@media (min-width: 40rem) {
-  .row--work {
-    grid-template-columns: minmax(0, 1fr) 9rem 1.25rem;
-    grid-template-areas: "main meta icon";
-  }
-
-  .row--work .row__meta {
-    flex-direction: column;
-    gap: 0;
-    padding-top: 0.45rem;
-    text-align: right;
-  }
-}
-
-/* Notes: date, title and summary, link icon */
-.row--note {
-  grid-template-columns: minmax(0, 1fr) 1.25rem;
-  grid-template-areas:
-    "date icon"
-    "main main";
-}
-
-.row--note .row__date { grid-area: date; }
-
-@media (min-width: 40rem) {
-  .row--note {
-    grid-template-columns: 7rem minmax(0, 1fr) 1.25rem;
-    grid-template-areas: "date main icon";
-  }
-
-  .row--note .row__date { padding-top: 0.5rem; }
-}
-
-/* Social links: platform, handle, link icon */
-.row--social {
-  grid-template-columns: auto minmax(0, 1fr) 1.25rem;
-  grid-template-areas: "label handle icon";
-  align-items: center;
-  padding-block: 1.25rem;
-}
-
-.row__label { grid-area: label; font-weight: 600; }
-
-.row__handle {
-  grid-area: handle;
-  color: var(--text-2);
-  overflow-wrap: anywhere;
-  text-align: right;
-}
-
-.row--social .row__icon { margin-top: 0; }
-
-/* Achievements: year, title, issuer */
-.entry {
-  display: grid;
-  gap: 0.35rem 2rem;
-}
-
-@media (min-width: 36rem) {
-  .entry { grid-template-columns: 6rem minmax(0, 1fr); }
-  .entry__year { padding-top: 0.4rem; }
-}
-
-.entry__year {
-  color: var(--text-3);
-  font-size: 0.9375rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.entry__title { font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.65rem); }
-
-/* Hover: the row under the pointer stays bright, the others step back */
-@media (hover: hover) {
-  .list:hover .row { opacity: 0.4; }
-  .list .row:hover { opacity: 1; }
-
-  .row:hover .row__icon { color: var(--text); }
-}
-
-
-/* 8. Connect, footer, motion preferences
-   ========================================================================== */
-.email {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem 1.5rem;
-  margin-top: clamp(2rem, 5vw, 3rem);
-}
-
-.email__link {
-  border-bottom: 1px solid var(--line-strong);
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 0.9rem + 3.6vw, 3.25rem);
-  font-weight: 300;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
-  transition: border-color 0.3s ease;
-}
-
-.email__link:hover { border-bottom-color: var(--text); }
-
-.email__copy {
-  min-height: 2.5rem;
-  padding: 0 1.1rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  color: var(--text-2);
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: color 0.3s ease, border-color 0.3s ease;
-}
-
-.email__copy:hover { color: var(--text); border-color: var(--text); }
-
-.footer {
-  padding-top: 2rem;
-  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
-  color: var(--text-3);
-  font-size: 0.875rem;
-}
-
-.footer__inner {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-}
-
-.footer a { transition: color 0.3s ease; }
-.footer a:hover { color: var(--text); }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
+  .page,
+  .cta,
+  .flame {
+    transition: none;
+  }
+
+  .flame {
+    animation: none;
+  }
+
+  .is-out .smoke {
+    animation: none;
   }
 }
