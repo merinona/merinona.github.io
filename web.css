@@ -7,6 +7,7 @@
   --flame: #ff9a1f;
   --heart: #d4283c;
   --heart-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+  --band: 6rem; /* top/bottom padding reserved for the hearts */
   --fade: 350ms; /* keep in sync with FADE_MS in main.js */
 }
 
@@ -33,11 +34,13 @@ main {
 
 /* All pages share one layout; only one is shown at a time */
 .page {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.5rem, 6vw, 4rem);
+  padding: var(--band) clamp(1.5rem, 6vw, 4rem);
   text-align: center;
   opacity: 0;
   transition: opacity var(--fade) ease;
@@ -92,15 +95,11 @@ h1 {
   outline-offset: 4px;
 }
 
-/* Faint hearts behind the landing page */
-#landing {
-  position: relative;
-  overflow: hidden;
-}
-
-#landing h1,
-#landing .cta {
-  position: relative; /* keeps the text and button above the hearts */
+/* Faint hearts: a layer on every page. They stay in the top and bottom
+   bands (the page padding) and, on wide screens, the side gutters,
+   so they never sit behind the text. */
+.page > :not(.hearts) {
+  position: relative; /* keeps text and buttons above the hearts */
 }
 
 .hearts {
@@ -112,7 +111,8 @@ h1 {
 .heart {
   position: absolute;
   left: var(--x);
-  top: var(--y);
+  top: var(--top, auto);
+  bottom: var(--bottom, auto);
   width: var(--s);
   aspect-ratio: 1;
   background: var(--heart);
@@ -122,6 +122,11 @@ h1 {
   transform: rotate(var(--r));
   animation: drift var(--t, 8s) ease-in-out infinite;
   animation-delay: var(--d, 0s);
+}
+
+/* Side hearts only appear once the gutters are wide enough */
+.heart--side {
+  display: none;
 }
 
 /* Vary opacity, speed and phase so the hearts don't move in sync */
@@ -134,7 +139,17 @@ h1 {
   50%      { transform: translateY(-0.6rem) rotate(calc(var(--r) + 5deg)); }
 }
 
+@media (min-width: 87.5rem) {
+  .heart--side {
+    display: block;
+  }
+}
+
 @media (max-width: 36rem) {
+  :root {
+    --band: 5rem;
+  }
+
   .heart {
     width: calc(var(--s) * 0.7);
   }
